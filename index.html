@@ -1,0 +1,2461 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Password Security Assistant</title>
+<style>
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  --bg-primary: #0f1729;
+  --bg-secondary: #1a2332;
+  --bg-card: rgba(26, 35, 50, 0.85);
+  --bg-card-hover: rgba(30, 42, 60, 0.95);
+  --bg-input: rgba(15, 23, 41, 0.8);
+  --text-primary: #e8edf5;
+  --text-secondary: #94a3b8;
+  --text-muted: #64748b;
+  --accent: #3b82f6;
+  --accent-hover: #2563eb;
+  --accent-glow: rgba(59, 130, 246, 0.15);
+  --success: #22c55e;
+  --success-bg: rgba(34, 197, 94, 0.1);
+  --warning: #f59e0b;
+  --warning-bg: rgba(245, 158, 11, 0.1);
+  --danger: #ef4444;
+  --danger-bg: rgba(239, 68, 68, 0.1);
+  --info: #06b6d4;
+  --info-bg: rgba(6, 182, 212, 0.1);
+  --border: rgba(148, 163, 184, 0.1);
+  --border-hover: rgba(148, 163, 184, 0.2);
+  --radius: 12px;
+  --radius-lg: 16px;
+  --radius-sm: 8px;
+  --shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 8px 40px rgba(0, 0, 0, 0.4);
+  --transition: 0.2s ease;
+  --font: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  --font-mono: 'SF Mono', 'Cascadia Code', 'Consolas', monospace;
+}
+
+[data-theme="light"] {
+  --bg-primary: #f0f4f8;
+  --bg-secondary: #e2e8f0;
+  --bg-card: rgba(255, 255, 255, 0.9);
+  --bg-card-hover: rgba(255, 255, 255, 0.98);
+  --bg-input: rgba(241, 245, 249, 0.9);
+  --text-primary: #1e293b;
+  --text-secondary: #475569;
+  --text-muted: #94a3b8;
+  --border: rgba(148, 163, 184, 0.25);
+  --border-hover: rgba(148, 163, 184, 0.4);
+  --shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 8px 40px rgba(0, 0, 0, 0.12);
+  --accent-glow: rgba(59, 130, 246, 0.08);
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: var(--font);
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  line-height: 1.6;
+  min-height: 100vh;
+  overflow-x: hidden;
+  transition: background var(--transition), color var(--transition);
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 8px; }
+::-webkit-scrollbar-track { background: var(--bg-primary); }
+::-webkit-scrollbar-thumb { background: var(--text-muted); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-secondary); }
+
+/* Focus */
+*:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* ===== NAVBAR ===== */
+.navbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  background: rgba(15, 23, 41, 0.92);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+  padding: 0 24px;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  transition: background var(--transition);
+}
+
+[data-theme="light"] .navbar {
+  background: rgba(240, 244, 248, 0.92);
+}
+
+.nav-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: var(--text-primary);
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.nav-logo svg {
+  width: 28px;
+  height: 28px;
+  color: var(--accent);
+}
+
+.nav-links {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  list-style: none;
+}
+
+.nav-link {
+  padding: 8px 16px;
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all var(--transition);
+  font-size: 0.9rem;
+  font-weight: 500;
+  border: none;
+  background: none;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.nav-link:hover, .nav-link.active {
+  color: var(--text-primary);
+  background: var(--accent-glow);
+}
+
+.nav-link.active {
+  color: var(--accent);
+}
+
+.nav-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.theme-toggle {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--transition);
+}
+
+.theme-toggle:hover {
+  background: var(--bg-card-hover);
+  color: var(--text-primary);
+  border-color: var(--border-hover);
+}
+
+.mobile-menu-btn {
+  display: none;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  cursor: pointer;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.mobile-menu-btn span {
+  display: block;
+  width: 18px;
+  height: 2px;
+  background: currentColor;
+  transition: all var(--transition);
+}
+
+/* ===== MAIN ===== */
+.main-content {
+  padding-top: 64px;
+  min-height: 100vh;
+}
+
+.page {
+  display: none;
+  animation: fadeIn 0.3s ease;
+}
+
+.page.active {
+  display: block;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+.section {
+  padding: 60px 0;
+}
+
+/* ===== HERO ===== */
+.hero {
+  padding: 100px 0 60px;
+  text-align: center;
+  position: relative;
+}
+
+.hero::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 600px;
+  height: 400px;
+  background: radial-gradient(ellipse, var(--accent-glow) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 16px;
+  border-radius: 100px;
+  background: var(--accent-glow);
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  color: var(--accent);
+  font-size: 0.85rem;
+  font-weight: 500;
+  margin-bottom: 24px;
+}
+
+.hero h1 {
+  font-size: clamp(2.2rem, 5vw, 3.5rem);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+  margin-bottom: 16px;
+  background: linear-gradient(135deg, var(--text-primary) 0%, var(--text-secondary) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.hero h1 span {
+  background: linear-gradient(135deg, var(--accent) 0%, #818cf8 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+}
+
+.hero-sub {
+  font-size: clamp(1rem, 2vw, 1.2rem);
+  color: var(--text-secondary);
+  max-width: 620px;
+  margin: 0 auto 36px;
+  line-height: 1.7;
+}
+
+.hero-buttons {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-bottom: 32px;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 28px;
+  border-radius: var(--radius);
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition);
+  border: none;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.btn-primary {
+  background: var(--accent);
+  color: #fff;
+  box-shadow: 0 2px 12px rgba(59, 130, 246, 0.3);
+}
+
+.btn-primary:hover {
+  background: var(--accent-hover);
+  box-shadow: 0 4px 20px rgba(59, 130, 246, 0.4);
+  transform: translateY(-1px);
+}
+
+.btn-secondary {
+  background: var(--bg-card);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+}
+
+.btn-secondary:hover {
+  background: var(--bg-card-hover);
+  border-color: var(--border-hover);
+  transform: translateY(-1px);
+}
+
+.btn-sm {
+  padding: 8px 16px;
+  font-size: 0.85rem;
+  border-radius: var(--radius-sm);
+}
+
+.btn-icon {
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  justify-content: center;
+  border-radius: var(--radius-sm);
+}
+
+.hero-trust {
+  display: flex;
+  gap: 24px;
+  justify-content: center;
+  flex-wrap: wrap;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+.hero-trust span {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.hero-trust svg {
+  width: 16px;
+  height: 16px;
+  color: var(--success);
+}
+
+/* ===== CARDS ===== */
+.card {
+  background: var(--bg-card);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 28px;
+  transition: all var(--transition);
+}
+
+.card:hover {
+  border-color: var(--border-hover);
+  box-shadow: var(--shadow);
+}
+
+.feature-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 20px;
+}
+
+.feature-card {
+  cursor: pointer;
+}
+
+.feature-card:hover {
+  transform: translateY(-2px);
+}
+
+.feature-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 16px;
+  font-size: 1.4rem;
+}
+
+.feature-icon.blue { background: rgba(59, 130, 246, 0.12); color: var(--accent); }
+.feature-icon.green { background: rgba(34, 197, 94, 0.12); color: var(--success); }
+.feature-icon.amber { background: rgba(245, 158, 11, 0.12); color: var(--warning); }
+.feature-icon.cyan { background: rgba(6, 182, 212, 0.12); color: var(--info); }
+
+.feature-card h3 {
+  font-size: 1.05rem;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.feature-card p {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+
+/* ===== PAGE HEADER ===== */
+.page-header {
+  text-align: center;
+  padding: 48px 0 36px;
+}
+
+.page-header h1 {
+  font-size: clamp(1.6rem, 4vw, 2.2rem);
+  font-weight: 800;
+  margin-bottom: 10px;
+}
+
+.page-header p {
+  color: var(--text-secondary);
+  font-size: 1.05rem;
+  max-width: 560px;
+  margin: 0 auto;
+}
+
+/* ===== PASSWORD INPUT ===== */
+.password-input-wrap {
+  position: relative;
+  margin-bottom: 24px;
+}
+
+.password-input {
+  width: 100%;
+  padding: 16px 120px 16px 20px;
+  font-size: 1.1rem;
+  font-family: var(--font-mono);
+  background: var(--bg-input);
+  border: 2px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text-primary);
+  transition: all var(--transition);
+}
+
+.password-input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 4px var(--accent-glow);
+  outline: none;
+}
+
+.password-input::placeholder {
+  color: var(--text-muted);
+  font-family: var(--font);
+}
+
+.password-input-actions {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  gap: 4px;
+}
+
+.input-action-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-sm);
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--transition);
+}
+
+.input-action-btn:hover {
+  color: var(--text-primary);
+  background: var(--accent-glow);
+}
+
+/* ===== STRENGTH METER ===== */
+.strength-section {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.strength-overview {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.strength-stat {
+  text-align: center;
+  padding: 20px 16px;
+}
+
+.strength-stat .label {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 8px;
+}
+
+.strength-stat .value {
+  font-size: 1.5rem;
+  font-weight: 800;
+}
+
+.strength-stat .value.very-weak { color: var(--danger); }
+.strength-stat .value.weak { color: #f97316; }
+.strength-stat .value.medium { color: var(--warning); }
+.strength-stat .value.strong { color: #22c55e; }
+.strength-stat .value.very-strong { color: #06b6d4; }
+
+.meter-bar {
+  width: 100%;
+  height: 8px;
+  background: var(--bg-input);
+  border-radius: 100px;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+
+.meter-fill {
+  height: 100%;
+  border-radius: 100px;
+  transition: width 0.4s ease, background 0.4s ease;
+  width: 0%;
+}
+
+.meter-fill.very-weak { background: var(--danger); width: 15%; }
+.meter-fill.weak { background: #f97316; width: 35%; }
+.meter-fill.medium { background: var(--warning); width: 55%; }
+.meter-fill.strong { background: var(--success); width: 80%; }
+.meter-fill.very-strong { background: var(--info); width: 100%; }
+
+/* ===== REQUIREMENTS ===== */
+.requirements-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 8px;
+  margin: 24px 0;
+}
+
+.req-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  font-size: 0.9rem;
+  transition: all var(--transition);
+  color: var(--text-muted);
+}
+
+.req-item.pass {
+  color: var(--success);
+  background: var(--success-bg);
+}
+
+.req-item.fail {
+  color: var(--text-muted);
+}
+
+.req-icon {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 0.75rem;
+  border: 2px solid currentColor;
+}
+
+.req-item.pass .req-icon {
+  background: var(--success);
+  color: #fff;
+  border-color: var(--success);
+}
+
+/* ===== ANALYSIS CARDS ===== */
+.analysis-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+  gap: 20px;
+  margin-top: 24px;
+}
+
+.analysis-card h3 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 1rem;
+  font-weight: 700;
+  margin-bottom: 14px;
+}
+
+.analysis-card ul {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.analysis-card li {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.analysis-card li svg {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.analysis-card.weak-card li svg { color: var(--warning); }
+.analysis-card.improve-card li svg { color: var(--accent); }
+.analysis-card.strong-card li svg { color: var(--success); }
+
+/* ===== ENTROPY ===== */
+.entropy-section {
+  margin-top: 24px;
+}
+
+.entropy-toggle {
+  font-size: 0.9rem;
+  color: var(--accent);
+  cursor: pointer;
+  background: none;
+  border: none;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.entropy-content {
+  display: none;
+  margin-top: 12px;
+}
+
+.entropy-content.visible {
+  display: block;
+}
+
+.entropy-value {
+  font-size: 2rem;
+  font-weight: 800;
+  font-family: var(--font-mono);
+  color: var(--accent);
+}
+
+.entropy-label {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+
+.entropy-note {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  font-style: italic;
+  margin-top: 8px;
+}
+
+/* ===== GENERATOR ===== */
+.gen-tabs {
+  display: flex;
+  gap: 4px;
+  background: var(--bg-input);
+  padding: 4px;
+  border-radius: var(--radius);
+  margin-bottom: 32px;
+  flex-wrap: wrap;
+}
+
+.gen-tab {
+  flex: 1;
+  min-width: 120px;
+  padding: 10px 20px;
+  border: none;
+  background: none;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  transition: all var(--transition);
+  white-space: nowrap;
+}
+
+.gen-tab:hover {
+  color: var(--text-primary);
+}
+
+.gen-tab.active {
+  background: var(--accent);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+}
+
+.gen-panel {
+  display: none;
+  animation: fadeIn 0.3s ease;
+}
+
+.gen-panel.active {
+  display: block;
+}
+
+/* Settings */
+.setting-group {
+  margin-bottom: 20px;
+}
+
+.setting-label {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.slider-wrap {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.slider-wrap input[type="range"] {
+  flex: 1;
+  -webkit-appearance: none;
+  appearance: none;
+  height: 6px;
+  background: var(--bg-input);
+  border-radius: 100px;
+  outline: none;
+  border: 1px solid var(--border);
+}
+
+.slider-wrap input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 20px;
+  height: 20px;
+  background: var(--accent);
+  border-radius: 50%;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+}
+
+.slider-wrap input[type="range"]::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  background: var(--accent);
+  border-radius: 50%;
+  cursor: pointer;
+  border: none;
+}
+
+.slider-value {
+  min-width: 44px;
+  text-align: center;
+  font-weight: 700;
+  font-size: 1.1rem;
+  font-family: var(--font-mono);
+  color: var(--accent);
+}
+
+.option-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.option-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  border-radius: var(--radius-sm);
+  border: 2px solid var(--border);
+  background: var(--bg-input);
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: all var(--transition);
+  user-select: none;
+}
+
+.option-btn:hover {
+  border-color: var(--border-hover);
+}
+
+.option-btn.active {
+  border-color: var(--accent);
+  background: var(--accent-glow);
+  color: var(--text-primary);
+}
+
+.option-btn .check {
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  border: 2px solid currentColor;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+}
+
+.option-btn.active .check {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+/* ===== GENERATED PASSWORDS ===== */
+.generated-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.gen-result {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 20px;
+  flex-wrap: wrap;
+}
+
+.gen-password {
+  flex: 1;
+  min-width: 200px;
+  font-family: var(--font-mono);
+  font-size: 1.05rem;
+  font-weight: 600;
+  word-break: break-all;
+  letter-spacing: 0.02em;
+}
+
+.gen-strength-badge {
+  padding: 4px 12px;
+  border-radius: 100px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+}
+
+.gen-strength-badge.strong {
+  background: var(--success-bg);
+  color: var(--success);
+}
+
+.gen-strength-badge.very-strong {
+  background: var(--info-bg);
+  color: var(--info);
+}
+
+.gen-strength-badge.medium {
+  background: var(--warning-bg);
+  color: var(--warning);
+}
+
+.gen-actions {
+  display: flex;
+  gap: 6px;
+}
+
+/* ===== TEXT INPUT ===== */
+.text-input {
+  width: 100%;
+  padding: 12px 16px;
+  font-size: 0.95rem;
+  background: var(--bg-input);
+  border: 2px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  transition: all var(--transition);
+  font-family: var(--font);
+}
+
+.text-input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 4px var(--accent-glow);
+  outline: none;
+}
+
+.text-input::placeholder {
+  color: var(--text-muted);
+}
+
+.input-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+/* ===== SECURITY TIP BOX ===== */
+.tip-box {
+  display: flex;
+  gap: 12px;
+  padding: 16px 20px;
+  border-radius: var(--radius);
+  background: var(--warning-bg);
+  border: 1px solid rgba(245, 158, 11, 0.2);
+  margin-bottom: 24px;
+  align-items: flex-start;
+}
+
+.tip-box svg {
+  width: 20px;
+  height: 20px;
+  color: var(--warning);
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.tip-box p {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+.tip-box strong {
+  color: var(--text-primary);
+}
+
+/* ===== PRIVACY BADGE ===== */
+.privacy-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 100px;
+  background: var(--success-bg);
+  border: 1px solid rgba(34, 197, 94, 0.15);
+  color: var(--success);
+  font-size: 0.8rem;
+  font-weight: 600;
+  margin-top: 16px;
+}
+
+.privacy-badge svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* ===== TIPS PAGE ===== */
+.tips-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 20px;
+}
+
+.tip-card {
+  position: relative;
+  overflow: hidden;
+}
+
+.tip-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+}
+
+.tip-card:nth-child(1)::before { background: var(--accent); }
+.tip-card:nth-child(2)::before { background: var(--success); }
+.tip-card:nth-child(3)::before { background: var(--warning); }
+.tip-card:nth-child(4)::before { background: var(--info); }
+.tip-card:nth-child(5)::before { background: #a855f7; }
+.tip-card:nth-child(6)::before { background: #ec4899; }
+
+.tip-card h3 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 1.05rem;
+  margin-bottom: 12px;
+}
+
+.tip-card h3 svg {
+  width: 22px;
+  height: 22px;
+}
+
+.tip-card p {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  line-height: 1.7;
+}
+
+/* ===== ABOUT PAGE ===== */
+.about-content {
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+.about-content h2 {
+  font-size: 1.3rem;
+  margin-bottom: 16px;
+  margin-top: 32px;
+}
+
+.about-content h2:first-child {
+  margin-top: 0;
+}
+
+.about-content p {
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+  line-height: 1.8;
+  margin-bottom: 12px;
+}
+
+.about-content ul {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.about-content li {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+
+.about-content li svg {
+  width: 18px;
+  height: 18px;
+  color: var(--success);
+  flex-shrink: 0;
+  margin-top: 3px;
+}
+
+/* ===== TOAST ===== */
+.toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%) translateY(80px);
+  padding: 12px 24px;
+  background: var(--success);
+  color: #fff;
+  border-radius: var(--radius);
+  font-size: 0.9rem;
+  font-weight: 600;
+  z-index: 9999;
+  transition: transform 0.3s ease;
+  box-shadow: 0 8px 24px rgba(34, 197, 94, 0.3);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.toast.visible {
+  transform: translateX(-50%) translateY(0);
+}
+
+/* ===== EMPTY STATE ===== */
+.empty-state {
+  text-align: center;
+  padding: 48px 20px;
+  color: var(--text-muted);
+}
+
+.empty-state svg {
+  width: 48px;
+  height: 48px;
+  margin-bottom: 16px;
+  opacity: 0.4;
+}
+
+.empty-state p {
+  font-size: 1rem;
+}
+
+/* ===== FOOTER ===== */
+.footer {
+  border-top: 1px solid var(--border);
+  padding: 40px 0 24px;
+  margin-top: 60px;
+}
+
+.footer-inner {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 32px;
+  margin-bottom: 24px;
+}
+
+.footer-brand h4 {
+  font-size: 1rem;
+  margin-bottom: 6px;
+}
+
+.footer-brand p {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+.footer-links {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.footer-link {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: color var(--transition);
+  background: none;
+  border: none;
+  text-decoration: none;
+}
+
+.footer-link:hover {
+  color: var(--text-primary);
+}
+
+.footer-bottom {
+  text-align: center;
+  padding-top: 20px;
+  border-top: 1px solid var(--border);
+  color: var(--text-muted);
+  font-size: 0.8rem;
+}
+
+/* ===== ERROR MSG ===== */
+.error-msg {
+  color: var(--danger);
+  font-size: 0.85rem;
+  margin-top: 6px;
+  display: none;
+  align-items: center;
+  gap: 6px;
+}
+
+.error-msg.visible {
+  display: flex;
+}
+
+/* ===== MOBILE NAV ===== */
+.mobile-nav {
+  display: none;
+  position: fixed;
+  top: 64px;
+  left: 0;
+  right: 0;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border);
+  padding: 12px 24px;
+  z-index: 999;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.mobile-nav.open {
+  display: flex;
+}
+
+.mobile-nav .nav-link {
+  display: block;
+  padding: 12px 16px;
+  text-align: left;
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 768px) {
+  .nav-links {
+    display: none;
+  }
+
+  .mobile-menu-btn {
+    display: flex;
+  }
+
+  .hero {
+    padding: 60px 0 40px;
+  }
+
+  .strength-overview {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .analysis-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .gen-result {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .gen-actions {
+    width: 100%;
+  }
+
+  .gen-actions .btn {
+    flex: 1;
+  }
+
+  .feature-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .password-input {
+    padding-right: 90px;
+    font-size: 0.95rem;
+  }
+
+  .container {
+    padding: 0 16px;
+  }
+
+  .section {
+    padding: 40px 0;
+  }
+
+  .footer-inner {
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 480px) {
+  .hero-buttons {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .gen-tabs {
+    flex-direction: column;
+  }
+
+  .gen-tab {
+    min-width: auto;
+  }
+
+  .option-grid {
+    flex-direction: column;
+  }
+
+  .option-btn {
+    width: 100%;
+  }
+
+  .requirements-grid {
+    grid-template-columns: 1fr;
+  }
+}
+</style>
+</head>
+<body>
+
+<!-- NAVBAR -->
+<nav class="navbar" role="navigation" aria-label="Main navigation">
+  <a class="nav-logo" onclick="navigate('home')" tabindex="0" aria-label="Password Security Assistant Home">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+    <span>Password Security Assistant</span>
+  </a>
+
+  <ul class="nav-links">
+    <li><button class="nav-link active" data-page="home" onclick="navigate('home')">Home</button></li>
+    <li><button class="nav-link" data-page="checker" onclick="navigate('checker')">Check Password</button></li>
+    <li><button class="nav-link" data-page="generator" onclick="navigate('generator')">Generate Password</button></li>
+    <li><button class="nav-link" data-page="tips" onclick="navigate('tips')">Security Tips</button></li>
+    <li><button class="nav-link" data-page="about" onclick="navigate('about')">About</button></li>
+  </ul>
+
+  <div class="nav-right">
+    <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme">
+      <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+      <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18" style="display:none"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+    </button>
+    <button class="mobile-menu-btn" onclick="toggleMobileMenu()" aria-label="Toggle menu">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+</nav>
+
+<!-- Mobile Nav -->
+<div class="mobile-nav" id="mobileNav" role="navigation" aria-label="Mobile navigation">
+  <button class="nav-link active" data-page="home" onclick="navigate('home');closeMobile()">Home</button>
+  <button class="nav-link" data-page="checker" onclick="navigate('checker');closeMobile()">Check Password</button>
+  <button class="nav-link" data-page="generator" onclick="navigate('generator');closeMobile()">Generate Password</button>
+  <button class="nav-link" data-page="tips" onclick="navigate('tips');closeMobile()">Security Tips</button>
+  <button class="nav-link" data-page="about" onclick="navigate('about');closeMobile()">About</button>
+</div>
+
+<!-- MAIN CONTENT -->
+<main class="main-content">
+
+<!-- ========== HOME ========== -->
+<div class="page active" id="page-home">
+
+  <!-- Hero -->
+  <section class="hero">
+    <div class="container">
+      <div class="hero-badge">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        Privacy-First Password Security
+      </div>
+      <h1>Check. Understand. <span>Strengthen.</span></h1>
+      <p class="hero-sub">Analyze your password strength and create stronger, more secure passwords — without ever storing your password.</p>
+      <div class="hero-buttons">
+        <button class="btn btn-primary" onclick="navigate('checker')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+          Check My Password
+        </button>
+        <button class="btn btn-secondary" onclick="navigate('generator')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48l2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48l2.83-2.83"/></svg>
+          Create Strong Password
+        </button>
+      </div>
+      <div class="hero-trust">
+        <span>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+          Privacy-focused
+        </span>
+        <span>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+          No password storage
+        </span>
+        <span>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+          Beginner friendly
+        </span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Features -->
+  <section class="section">
+    <div class="container">
+      <div class="feature-grid">
+        <div class="card feature-card" onclick="navigate('checker')" tabindex="0" role="button" aria-label="Open Password Analyzer">
+          <div class="feature-icon blue">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="24" height="24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+          </div>
+          <h3>Password Analyzer</h3>
+          <p>Check password length, complexity, patterns and overall strength in real time.</p>
+        </div>
+        <div class="card feature-card" onclick="navigate('generator');setGenTab('random')" tabindex="0" role="button" aria-label="Open Smart Generator">
+          <div class="feature-icon green">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="24" height="24"><path d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48l2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48l2.83-2.83"/></svg>
+          </div>
+          <h3>Smart Generator</h3>
+          <p>Generate strong random passwords based on your preferred settings.</p>
+        </div>
+        <div class="card feature-card" onclick="navigate('generator');setGenTab('personal')" tabindex="0" role="button" aria-label="Open Personalized Passwords">
+          <div class="feature-icon amber">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="24" height="24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          </div>
+          <h3>Personalized Passwords</h3>
+          <p>Create memorable password suggestions based on optional user preferences.</p>
+        </div>
+        <div class="card feature-card" onclick="navigate('generator');setGenTab('passphrase')" tabindex="0" role="button" aria-label="Open Passphrase Generator">
+          <div class="feature-icon cyan">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="24" height="24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+          </div>
+          <h3>Passphrase Generator</h3>
+          <p>Generate long, memorable passphrases that are easy to remember and hard to crack.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- ========== CHECKER ========== -->
+<div class="page" id="page-checker">
+  <div class="container">
+    <div class="page-header">
+      <h1>Password Strength Analyzer</h1>
+      <p>Check how strong your password is and learn how to improve it.</p>
+    </div>
+
+    <div class="strength-section">
+      <div class="password-input-wrap">
+        <input type="password" class="password-input" id="checkerInput" placeholder="Enter your password to analyze..." aria-label="Password to analyze" autocomplete="off">
+        <div class="password-input-actions">
+          <button class="input-action-btn" onclick="toggleVisibility('checkerInput', this)" aria-label="Show password" title="Show/Hide">
+            <svg class="eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
+          <button class="input-action-btn" onclick="clearInput('checkerInput')" aria-label="Clear password" title="Clear">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Empty State -->
+      <div class="empty-state" id="checkerEmpty">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        <p>Enter a password to begin the analysis.</p>
+      </div>
+
+      <!-- Analysis (hidden until input) -->
+      <div id="checkerResults" style="display:none;">
+        <!-- Strength Overview -->
+        <div class="strength-overview">
+          <div class="card strength-stat">
+            <div class="label">Strength</div>
+            <div class="value" id="strengthLabel">—</div>
+          </div>
+          <div class="card strength-stat">
+            <div class="label">Security Score</div>
+            <div class="value" id="scoreLabel">—</div>
+          </div>
+          <div class="card strength-stat">
+            <div class="label">Password Length</div>
+            <div class="value" id="lengthLabel" style="color:var(--text-primary)">0</div>
+          </div>
+        </div>
+
+        <!-- Meter -->
+        <div class="card" style="margin-bottom:24px">
+          <div class="meter-bar">
+            <div class="meter-fill" id="meterFill"></div>
+          </div>
+        </div>
+
+        <!-- Requirements -->
+        <div class="card" style="margin-bottom:24px">
+          <h3 style="font-size:0.95rem;margin-bottom:14px;color:var(--text-secondary)">Password Requirements</h3>
+          <div class="requirements-grid" id="requirementsList"></div>
+        </div>
+
+        <!-- Analysis Cards -->
+        <div class="analysis-grid" id="analysisCards"></div>
+
+        <!-- Entropy -->
+        <div class="entropy-section card" style="margin-top:24px">
+          <button class="entropy-toggle" onclick="toggleEntropy()" aria-expanded="false">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><polyline points="6 9 12 15 18 9"/></svg>
+            Show Advanced Analysis
+          </button>
+          <div class="entropy-content" id="entropyContent">
+            <div style="margin-top:12px">
+              <div class="label" style="font-size:0.75rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.05em;">Estimated Entropy</div>
+              <div class="entropy-value" id="entropyValue">0 bits</div>
+              <div class="entropy-label">Advanced metric</div>
+              <div class="entropy-note">Entropy is an estimate and does not guarantee that a password is secure.</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Privacy Badge -->
+        <div style="text-align:center;margin-top:20px">
+          <span class="privacy-badge">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            Your password is not stored
+          </span>
+        </div>
+
+        <!-- CTA -->
+        <div style="text-align:center;margin-top:28px" id="checkerCTA">
+          <button class="btn btn-primary" onclick="navigate('generator')">Create a Better Password</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ========== GENERATOR ========== -->
+<div class="page" id="page-generator">
+  <div class="container">
+    <div class="page-header">
+      <h1>Create a Strong Password</h1>
+      <p>Generate secure passwords tailored to your preferences.</p>
+    </div>
+
+    <div style="max-width:800px;margin:0 auto">
+      <!-- Tabs -->
+      <div class="gen-tabs" role="tablist">
+        <button class="gen-tab active" data-tab="random" onclick="setGenTab('random')" role="tab" aria-selected="true">Random</button>
+        <button class="gen-tab" data-tab="memorable" onclick="setGenTab('memorable')" role="tab" aria-selected="false">Memorable</button>
+        <button class="gen-tab" data-tab="personal" onclick="setGenTab('personal')" role="tab" aria-selected="false">Personalized</button>
+        <button class="gen-tab" data-tab="passphrase" onclick="setGenTab('passphrase')" role="tab" aria-selected="false">Passphrase</button>
+      </div>
+
+      <!-- Random Panel -->
+      <div class="gen-panel active" id="panel-random" role="tabpanel">
+        <div class="card">
+          <div class="setting-group">
+            <label class="setting-label" for="randomLength">Password Length</label>
+            <div class="slider-wrap">
+              <input type="range" id="randomLength" min="8" max="32" value="16" oninput="updateSlider('randomLength','randomLenVal')">
+              <span class="slider-value" id="randomLenVal">16</span>
+            </div>
+          </div>
+          <div class="setting-group">
+            <span class="setting-label">Character Types</span>
+            <div class="option-grid" id="randomOptions">
+              <button class="option-btn active" data-opt="upper" onclick="toggleOpt(this,'randomOptions')"><span class="check">✓</span> Uppercase</button>
+              <button class="option-btn active" data-opt="lower" onclick="toggleOpt(this,'randomOptions')"><span class="check">✓</span> Lowercase</button>
+              <button class="option-btn active" data-opt="numbers" onclick="toggleOpt(this,'randomOptions')"><span class="check">✓</span> Numbers</button>
+              <button class="option-btn active" data-opt="symbols" onclick="toggleOpt(this,'randomOptions')"><span class="check">✓</span> Symbols</button>
+            </div>
+            <div class="error-msg" id="randomError">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+              <span></span>
+            </div>
+          </div>
+          <button class="btn btn-primary" onclick="generateRandom()" style="width:100%">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48l2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48l2.83-2.83"/></svg>
+            Generate Password
+          </button>
+        </div>
+        <div class="generated-list" id="randomResults"></div>
+      </div>
+
+      <!-- Memorable Panel -->
+      <div class="gen-panel" id="panel-memorable" role="tabpanel">
+        <div class="card">
+          <div class="setting-group">
+            <label class="setting-label" for="memorableLength">Password Length</label>
+            <div class="slider-wrap">
+              <input type="range" id="memorableLength" min="12" max="32" value="18" oninput="updateSlider('memorableLength','memorableLenVal')">
+              <span class="slider-value" id="memorableLenVal">18</span>
+            </div>
+          </div>
+          <div class="setting-group">
+            <span class="setting-label">Include</span>
+            <div class="option-grid" id="memorableOptions">
+              <button class="option-btn active" data-opt="upper" onclick="toggleOpt(this,'memorableOptions')"><span class="check">✓</span> Uppercase</button>
+              <button class="option-btn active" data-opt="lower" onclick="toggleOpt(this,'memorableOptions')"><span class="check">✓</span> Lowercase</button>
+              <button class="option-btn active" data-opt="numbers" onclick="toggleOpt(this,'memorableOptions')"><span class="check">✓</span> Numbers</button>
+              <button class="option-btn active" data-opt="symbols" onclick="toggleOpt(this,'memorableOptions')"><span class="check">✓</span> Symbols</button>
+            </div>
+            <div class="error-msg" id="memorableError">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+              <span></span>
+            </div>
+          </div>
+          <button class="btn btn-primary" onclick="generateMemorable()" style="width:100%">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48l2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48l2.83-2.83"/></svg>
+            Generate Memorable Password
+          </button>
+        </div>
+        <div class="generated-list" id="memorableResults"></div>
+      </div>
+
+      <!-- Personal Panel -->
+      <div class="gen-panel" id="panel-personal" role="tabpanel">
+        <div class="tip-box">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+          <p><strong>Security Tip:</strong> Avoid using your real name, birthday, phone number, address, or other publicly available information directly in your password. Personalization can make passwords easier to remember but can also make them predictable if personal information is used directly.</p>
+        </div>
+        <div class="card">
+          <div class="input-grid">
+            <div class="setting-group">
+              <label class="setting-label" for="persWord">Favorite Word (optional)</label>
+              <input type="text" class="text-input" id="persWord" placeholder="e.g., mountain" maxlength="20" autocomplete="off">
+            </div>
+            <div class="setting-group">
+              <label class="setting-label" for="persNumber">Favorite Number (optional)</label>
+              <input type="text" class="text-input" id="persNumber" placeholder="e.g., 42" maxlength="6" autocomplete="off">
+            </div>
+            <div class="setting-group">
+              <label class="setting-label" for="persTheme">Theme / Memorable Word (optional)</label>
+              <input type="text" class="text-input" id="persTheme" placeholder="e.g., river" maxlength="20" autocomplete="off">
+            </div>
+          </div>
+          <div class="setting-group">
+            <label class="setting-label" for="persLength">Password Length</label>
+            <div class="slider-wrap">
+              <input type="range" id="persLength" min="12" max="32" value="20" oninput="updateSlider('persLength','persLenVal')">
+              <span class="slider-value" id="persLenVal">20</span>
+            </div>
+          </div>
+          <div class="setting-group">
+            <span class="setting-label">Include</span>
+            <div class="option-grid" id="persOptions">
+              <button class="option-btn active" data-opt="upper" onclick="toggleOpt(this,'persOptions')"><span class="check">✓</span> Uppercase</button>
+              <button class="option-btn active" data-opt="lower" onclick="toggleOpt(this,'persOptions')"><span class="check">✓</span> Lowercase</button>
+              <button class="option-btn active" data-opt="numbers" onclick="toggleOpt(this,'persOptions')"><span class="check">✓</span> Numbers</button>
+              <button class="option-btn active" data-opt="symbols" onclick="toggleOpt(this,'persOptions')"><span class="check">✓</span> Symbols</button>
+            </div>
+            <div class="error-msg" id="persError">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+              <span></span>
+            </div>
+          </div>
+          <button class="btn btn-primary" onclick="generatePersonal()" style="width:100%">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            Generate Personalized Password
+          </button>
+        </div>
+        <div class="generated-list" id="personalResults"></div>
+      </div>
+
+      <!-- Passphrase Panel -->
+      <div class="gen-panel" id="panel-passphrase" role="tabpanel">
+        <div class="card">
+          <div class="setting-group">
+            <label class="setting-label" for="phraseWords">Number of Words</label>
+            <div class="slider-wrap">
+              <input type="range" id="phraseWords" min="4" max="8" value="5" oninput="updateSlider('phraseWords','phraseWordVal')">
+              <span class="slider-value" id="phraseWordVal">5</span>
+            </div>
+          </div>
+          <div class="setting-group">
+            <span class="setting-label">Options</span>
+            <div class="option-grid" id="phraseOptions">
+              <button class="option-btn active" data-opt="numbers" onclick="toggleOpt(this,'phraseOptions')"><span class="check">✓</span> Include Numbers</button>
+              <button class="option-btn active" data-opt="symbols" onclick="toggleOpt(this,'phraseOptions')"><span class="check">✓</span> Include Symbols</button>
+            </div>
+          </div>
+          <button class="btn btn-primary" onclick="generatePassphrase()" style="width:100%">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+            Generate Passphrase
+          </button>
+          <p style="font-size:0.85rem;color:var(--text-muted);margin-top:14px;line-height:1.6">Long, unique passphrases can be easier to remember while providing strong protection.</p>
+        </div>
+        <div class="generated-list" id="passphraseResults"></div>
+      </div>
+
+      <!-- Privacy Badge -->
+      <div style="text-align:center;margin-top:24px">
+        <span class="privacy-badge">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          Your password is not stored
+        </span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ========== TIPS ========== -->
+<div class="page" id="page-tips">
+  <div class="container">
+    <div class="page-header">
+      <h1>Password Security Tips</h1>
+      <p>Essential practices to keep your accounts safe.</p>
+    </div>
+
+    <div class="tips-grid">
+      <div class="card tip-card">
+        <h3>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="22" height="22" style="color:var(--accent)"><path d="M15.5 7.5l-7 7"/><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          Use Unique Passwords
+        </h3>
+        <p>Never reuse the same password for multiple important accounts. If one account is compromised, all accounts sharing that password become vulnerable.</p>
+      </div>
+      <div class="card tip-card">
+        <h3>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="22" height="22" style="color:var(--success)"><line x1="21" y1="10" x2="3" y2="10"/><path d="M3 10V6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v4"/><path d="M3 10v8a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-8"/></svg>
+          Prefer Long Passwords
+        </h3>
+        <p>Long passwords and passphrases are generally more secure than short passwords with complex substitutions. Aim for at least 12–16 characters.</p>
+      </div>
+      <div class="card tip-card">
+        <h3>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="22" height="22" style="color:var(--warning)"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          Avoid Personal Information
+        </h3>
+        <p>Don't use your name, birthday, phone number, address, or username in your passwords. Attackers often try personal information first.</p>
+      </div>
+      <div class="card tip-card">
+        <h3>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="22" height="22" style="color:var(--info)"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M12 12h.01"/><path d="M17 12h.01"/><path d="M7 12h.01"/></svg>
+          Use a Password Manager
+        </h3>
+        <p>Password managers can help you create and store unique, strong passwords for each account securely. You only need to remember one master password.</p>
+      </div>
+      <div class="card tip-card">
+        <h3>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="22" height="22" style="color:#a855f7"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          Enable Multi-Factor Authentication
+        </h3>
+        <p>Enable MFA wherever available. Even if your password is compromised, a second factor (like a code from your phone) adds a critical layer of protection.</p>
+      </div>
+      <div class="card tip-card">
+        <h3>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="22" height="22" style="color:#ec4899"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+          Beware of Phishing
+        </h3>
+        <p>Even the strongest password can be stolen through phishing. Always verify the sender and URL before entering your credentials. When in doubt, navigate directly to the website.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ========== ABOUT ========== -->
+<div class="page" id="page-about">
+  <div class="container">
+    <div class="page-header">
+      <h1>About Password Security Assistant</h1>
+    </div>
+    <div class="about-content">
+      <div class="card" style="padding:36px">
+        <h2>What Is This Tool?</h2>
+        <p>Password Security Assistant is a privacy-focused educational security tool designed to help users understand password strength and create stronger password options.</p>
+        <p>Built for learning and security awareness.</p>
+
+        <h2>Your Privacy Matters</h2>
+        <ul>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg> Password analysis happens locally in your browser</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg> No passwords are stored or logged</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg> No passwords are sent to external services</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg> Generated passwords are not saved</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg> Clipboard is only used when you explicitly click Copy</li>
+        </ul>
+
+        <h2>Important Disclaimer</h2>
+        <p>This tool provides estimates and educational guidance. No tool can guarantee that a password is unbreakable. Always follow current security best practices and use multi-factor authentication wherever possible.</p>
+        <p style="margin-top:16px;font-size:0.85rem;color:var(--text-muted)">For educational and security-awareness purposes.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+</main>
+
+<!-- FOOTER -->
+<footer class="footer">
+  <div class="container">
+    <div class="footer-inner">
+      <div class="footer-brand">
+        <h4>Password Security Assistant</h4>
+        <p>Check. Understand. Strengthen.</p>
+      </div>
+      <div class="footer-links">
+        <button class="footer-link" onclick="navigate('home')">Home</button>
+        <button class="footer-link" onclick="navigate('checker')">Check Password</button>
+        <button class="footer-link" onclick="navigate('generator')">Generate Password</button>
+        <button class="footer-link" onclick="navigate('tips')">Security Tips</button>
+        <button class="footer-link" onclick="navigate('about')">Privacy</button>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      For educational and security-awareness purposes.
+    </div>
+  </div>
+</footer>
+
+<!-- TOAST -->
+<div class="toast" id="toast">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+  <span id="toastText">Copied!</span>
+</div>
+
+<script>
+// ===== COMMON WORDS LIST =====
+const WORD_LIST = [
+  'river','mountain','forest','ocean','valley','sunset','thunder','crystal','dragon','falcon',
+  'silver','golden','copper','iron','bronze','marble','ember','shadow','storm','frost',
+  'cloud','breeze','harbor','island','canyon','meadow','glacier','summit','desert','tundra',
+  'phoenix','tiger','eagle','wolf','panther','cobra','raven','dolphin','stallion','hawk',
+  'castle','tower','bridge','garden','temple','palace','fortress','village','harbor','beacon',
+  'crimson','azure','scarlet','emerald','violet','ivory','sapphire','amber','indigo','coral',
+  'comet','nebula','orbit','quasar','pulsar','photon','prism','zenith','vertex','matrix',
+  'train','rocket','anchor','compass','lantern','violin','piano','guitar','canvas','puzzle',
+  'coffee','cinnamon','pepper','ginger','saffron','vanilla','walnut','cherry','mango','lemon',
+  'atlas','echo','nova','luna','stella','aurora','terra','flora','zephyr','cosmos'
+];
+
+const COMMON_PASSWORDS = [
+  'password','123456','12345678','qwerty','abc123','monkey','master','dragon','111111','baseball',
+  'iloveyou','trustno1','sunshine','princess','football','charlie','shadow','michael','login',
+  'welcome','admin','letmein','654321','superman','hello','password1','password123','1234567890',
+  'qwerty123','000000','121212','1q2w3e4r','access','starwars','passw0rd','zaq12wsx','!@#$%^&*'
+];
+
+const KEYBOARD_PATTERNS = [
+  'qwerty','asdfgh','zxcvbn','qwertyuiop','asdfghjkl','zxcvbnm',
+  '1234567890','1qaz2wsx','qazwsx','!@#$%^','098765','987654'
+];
+
+// ===== NAVIGATION =====
+function navigate(page) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-' + page).classList.add('active');
+  document.querySelectorAll('.nav-link').forEach(l => {
+    l.classList.toggle('active', l.dataset.page === page);
+  });
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function toggleMobileMenu() {
+  document.getElementById('mobileNav').classList.toggle('open');
+}
+function closeMobile() {
+  document.getElementById('mobileNav').classList.remove('open');
+}
+
+// ===== THEME =====
+function toggleTheme() {
+  const html = document.documentElement;
+  const isDark = html.dataset.theme === 'dark';
+  html.dataset.theme = isDark ? 'light' : 'dark';
+  document.querySelector('.icon-moon').style.display = isDark ? 'none' : 'block';
+  document.querySelector('.icon-sun').style.display = isDark ? 'block' : 'none';
+}
+
+// ===== PASSWORD INPUT HELPERS =====
+function toggleVisibility(inputId, btn) {
+  const input = document.getElementById(inputId);
+  if (input.type === 'password') {
+    input.type = 'text';
+    btn.setAttribute('aria-label', 'Hide password');
+  } else {
+    input.type = 'password';
+    btn.setAttribute('aria-label', 'Show password');
+  }
+}
+
+function clearInput(inputId) {
+  const input = document.getElementById(inputId);
+  input.value = '';
+  input.dispatchEvent(new Event('input'));
+  input.focus();
+}
+
+// ===== PASSWORD ANALYSIS ENGINE =====
+function analyzePassword(pw) {
+  const result = {
+    length: pw.length,
+    hasUpper: /[A-Z]/.test(pw),
+    hasLower: /[a-z]/.test(pw),
+    hasNumber: /[0-9]/.test(pw),
+    hasSymbol: /[^A-Za-z0-9]/.test(pw),
+    hasMin8: pw.length >= 8,
+    has12Plus: pw.length >= 12,
+    noCommonPattern: true,
+    isCommon: false,
+    hasRepeated: false,
+    hasSequential: false,
+    score: 0,
+    strength: 'very-weak',
+    strengthLabel: 'Very Weak',
+    entropy: 0,
+    weaknesses: [],
+    improvements: [],
+    strengths: []
+  };
+
+  // Common password
+  if (COMMON_PASSWORDS.includes(pw.toLowerCase())) {
+    result.isCommon = true;
+    result.noCommonPattern = false;
+  }
+
+  // Keyboard patterns
+  const pwLower = pw.toLowerCase();
+  for (const pat of KEYBOARD_PATTERNS) {
+    if (pwLower.includes(pat) || pwLower.includes(pat.split('').reverse().join(''))) {
+      result.noCommonPattern = false;
+      break;
+    }
+  }
+
+  // Repeated characters (3+)
+  if (/(.)\1{2,}/.test(pw)) {
+    result.hasRepeated = true;
+    result.noCommonPattern = false;
+  }
+
+  // Sequential numbers (3+)
+  for (let i = 0; i < pw.length - 2; i++) {
+    const c1 = pw.charCodeAt(i), c2 = pw.charCodeAt(i+1), c3 = pw.charCodeAt(i+2);
+    if (c2 === c1 + 1 && c3 === c2 + 1) { result.hasSequential = true; result.noCommonPattern = false; break; }
+    if (c2 === c1 - 1 && c3 === c2 - 1) { result.hasSequential = true; result.noCommonPattern = false; break; }
+  }
+
+  // Score calculation
+  let score = 0;
+  if (result.hasMin8) score += 1;
+  if (result.has12Plus) score += 1;
+  if (pw.length >= 16) score += 1;
+  if (result.hasUpper) score += 1;
+  if (result.hasLower) score += 1;
+  if (result.hasNumber) score += 1;
+  if (result.hasSymbol) score += 1.5;
+  if (result.noCommonPattern) score += 1.5;
+  if (result.isCommon) score -= 3;
+  if (result.hasRepeated) score -= 0.5;
+  if (result.hasSequential) score -= 0.5;
+
+  // Unique chars bonus
+  const uniqueRatio = new Set(pw).size / pw.length;
+  if (uniqueRatio > 0.7 && pw.length >= 10) score += 1;
+
+  score = Math.max(0, Math.min(10, Math.round(score)));
+  result.score = score;
+
+  // Strength label
+  if (score <= 2) { result.strength = 'very-weak'; result.strengthLabel = 'Very Weak'; }
+  else if (score <= 4) { result.strength = 'weak'; result.strengthLabel = 'Weak'; }
+  else if (score <= 6) { result.strength = 'medium'; result.strengthLabel = 'Medium'; }
+  else if (score <= 8) { result.strength = 'strong'; result.strengthLabel = 'Strong'; }
+  else { result.strength = 'very-strong'; result.strengthLabel = 'Very Strong'; }
+
+  // Entropy
+  let charsetSize = 0;
+  if (result.hasLower) charsetSize += 26;
+  if (result.hasUpper) charsetSize += 26;
+  if (result.hasNumber) charsetSize += 10;
+  if (result.hasSymbol) charsetSize += 32;
+  if (charsetSize === 0) charsetSize = 26;
+  result.entropy = Math.round(pw.length * Math.log2(charsetSize));
+
+  // Weaknesses
+  if (!result.hasMin8) result.weaknesses.push('Too short (minimum 8 characters)');
+  if (!result.has12Plus && result.hasMin8) result.weaknesses.push('Less than 12 characters');
+  if (!result.hasUpper) result.weaknesses.push('Missing uppercase letters');
+  if (!result.hasLower) result.weaknesses.push('Missing lowercase letters');
+  if (!result.hasNumber) result.weaknesses.push('Missing numbers');
+  if (!result.hasSymbol) result.weaknesses.push('Missing special characters');
+  if (result.isCommon) result.weaknesses.push('Common password pattern detected');
+  if (result.hasRepeated) result.weaknesses.push('Contains repeated characters');
+  if (result.hasSequential) result.weaknesses.push('Contains sequential characters');
+
+  // Improvements
+  if (!result.has12Plus) result.improvements.push('Use at least 12 characters');
+  if (!result.hasUpper || !result.hasLower || !result.hasNumber || !result.hasSymbol) {
+    result.improvements.push('Combine different character types');
+  }
+  if (!result.noCommonPattern) result.improvements.push('Avoid common words and patterns');
+  result.improvements.push('Consider using a long passphrase');
+  result.improvements.push('Use a unique password for each account');
+
+  // Strengths
+  if (result.has12Plus) result.strengths.push('Good length (' + pw.length + ' characters)');
+  else if (result.hasMin8) result.strengths.push('Acceptable length (' + pw.length + ' characters)');
+  const types = [result.hasUpper, result.hasLower, result.hasNumber, result.hasSymbol].filter(Boolean).length;
+  if (types >= 3) result.strengths.push('Good character variety');
+  if (result.noCommonPattern) result.strengths.push('No obvious pattern detected');
+
+  return result;
+}
+
+// ===== CHECKER PAGE =====
+const checkerInput = document.getElementById('checkerInput');
+checkerInput.addEventListener('input', function() {
+  const pw = this.value;
+  if (!pw) {
+    document.getElementById('checkerEmpty').style.display = 'block';
+    document.getElementById('checkerResults').style.display = 'none';
+    return;
+  }
+  document.getElementById('checkerEmpty').style.display = 'none';
+  document.getElementById('checkerResults').style.display = 'block';
+
+  const r = analyzePassword(pw);
+
+  // Strength
+  const sl = document.getElementById('strengthLabel');
+  sl.textContent = r.strengthLabel;
+  sl.className = 'value ' + r.strength;
+
+  // Score
+  document.getElementById('scoreLabel').textContent = r.score + '/10';
+  document.getElementById('scoreLabel').className = 'value ' + r.strength;
+
+  // Length
+  document.getElementById('lengthLabel').textContent = r.length + ' chars';
+
+  // Meter
+  const mf = document.getElementById('meterFill');
+  mf.className = 'meter-fill ' + r.strength;
+
+  // Requirements
+  const reqs = [
+    { pass: r.hasMin8, text: 'At least 8 characters' },
+    { pass: r.has12Plus, text: '12+ characters recommended' },
+    { pass: r.hasUpper, text: 'Contains uppercase letter' },
+    { pass: r.hasLower, text: 'Contains lowercase letter' },
+    { pass: r.hasNumber, text: 'Contains number' },
+    { pass: r.hasSymbol, text: 'Contains special character' },
+    { pass: r.noCommonPattern, text: 'No obvious/common patterns' }
+  ];
+
+  const reqHtml = reqs.map(rq => `
+    <div class="req-item ${rq.pass ? 'pass' : 'fail'}">
+      <span class="req-icon">${rq.pass ? '✓' : ''}</span>
+      <span>${rq.text} ${rq.pass ? '' : '✗'}</span>
+    </div>
+  `).join('');
+  document.getElementById('requirementsList').innerHTML = reqHtml;
+
+  // Analysis cards
+  let cardsHtml = '';
+
+  if (r.weaknesses.length > 0 && r.score < 8) {
+    cardsHtml += `
+      <div class="card analysis-card weak-card">
+        <h3>
+          <svg viewBox="0 0 24 24" fill="none" stroke="var(--warning)" stroke-width="2" width="20" height="20"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          Why is this password weak?
+        </h3>
+        <ul>${r.weaknesses.map(w => `<li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>${w}</li>`).join('')}</ul>
+      </div>
+    `;
+
+    cardsHtml += `
+      <div class="card analysis-card improve-card">
+        <h3>
+          <svg viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" width="20" height="20"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+          How can you improve it?
+        </h3>
+        <ul>${r.improvements.map(i => `<li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>${i}</li>`).join('')}</ul>
+      </div>
+    `;
+  }
+
+  if (r.score >= 7) {
+    cardsHtml += `
+      <div class="card analysis-card strong-card">
+        <h3>
+          <svg viewBox="0 0 24 24" fill="none" stroke="var(--success)" stroke-width="2" width="20" height="20"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+          Good password
+        </h3>
+        <ul>${r.strengths.map(s => `<li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>${s}</li>`).join('')}</ul>
+        <p style="font-size:0.85rem;color:var(--text-muted);margin-top:12px;font-style:italic">Never reuse this password across multiple important accounts.</p>
+      </div>
+    `;
+  }
+
+  document.getElementById('analysisCards').innerHTML = cardsHtml;
+
+  // Entropy
+  document.getElementById('entropyValue').textContent = r.entropy + ' bits';
+
+  // CTA
+  document.getElementById('checkerCTA').style.display = r.score < 7 ? 'block' : 'none';
+});
+
+// Entropy toggle
+function toggleEntropy() {
+  const content = document.getElementById('entropyContent');
+  const btn = document.querySelector('.entropy-toggle');
+  const visible = content.classList.toggle('visible');
+  btn.setAttribute('aria-expanded', visible);
+  btn.innerHTML = `
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><polyline points="${visible ? '18 15 12 9 6 15' : '6 9 12 15 18 9'}"/></svg>
+    ${visible ? 'Hide' : 'Show'} Advanced Analysis
+  `;
+}
+
+// ===== GENERATOR TABS =====
+function setGenTab(tab) {
+  document.querySelectorAll('.gen-tab').forEach(t => {
+    t.classList.toggle('active', t.dataset.tab === tab);
+    t.setAttribute('aria-selected', t.dataset.tab === tab);
+  });
+  document.querySelectorAll('.gen-panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('panel-' + tab).classList.add('active');
+}
+
+// Slider update
+function updateSlider(sliderId, valId) {
+  document.getElementById(valId).textContent = document.getElementById(sliderId).value;
+}
+
+// Option toggle
+function toggleOpt(btn, groupId) {
+  btn.classList.toggle('active');
+  const check = btn.querySelector('.check');
+  check.textContent = btn.classList.contains('active') ? '✓' : '';
+}
+
+function getActiveOpts(groupId) {
+  const opts = {};
+  document.querySelectorAll(`#${groupId} .option-btn`).forEach(b => {
+    opts[b.dataset.opt] = b.classList.contains('active');
+  });
+  return opts;
+}
+
+function showError(id, msg) {
+  const el = document.getElementById(id);
+  el.querySelector('span').textContent = msg;
+  el.classList.add('visible');
+  setTimeout(() => el.classList.remove('visible'), 3000);
+}
+
+// ===== RANDOM GENERATOR =====
+function generateRandomPassword(length, opts) {
+  let chars = '';
+  let required = [];
+  if (opts.upper) { chars += 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'; required.push('ABCDEFGHIJKLMNOPQRSTUVWXYZ'); }
+  if (opts.lower) { chars += 'abcdefghijklmnopqrstuvwxyz'; required.push('abcdefghijklmnopqrstuvwxyz'); }
+  if (opts.numbers) { chars += '0123456789'; required.push('0123456789'); }
+  if (opts.symbols) { chars += '!@#$%^&*()-_=+[]{}|;:,.<>?'; required.push('!@#$%^&*()-_=+[]{}|;:,.<>?'); }
+
+  if (!chars) return null;
+
+  let pw = '';
+  // Ensure at least one from each required set
+  for (const r of required) {
+    pw += r[Math.floor(Math.random() * r.length)];
+  }
+  // Fill rest
+  while (pw.length < length) {
+    pw += chars[Math.floor(Math.random() * chars.length)];
+  }
+  // Shuffle
+  pw = pw.split('').sort(() => Math.random() - 0.5).join('');
+  return pw;
+}
+
+function generateRandom() {
+  const opts = getActiveOpts('randomOptions');
+  if (!opts.upper && !opts.lower && !opts.numbers && !opts.symbols) {
+    showError('randomError', 'Select at least one character type.');
+    return;
+  }
+  const length = parseInt(document.getElementById('randomLength').value);
+  const results = [];
+  for (let i = 0; i < 3; i++) {
+    let pw, analysis, attempts = 0;
+    do {
+      pw = generateRandomPassword(length, opts);
+      analysis = analyzePassword(pw);
+      attempts++;
+    } while (analysis.score < 6 && attempts < 20);
+    results.push({ pw, analysis });
+  }
+  renderResults('randomResults', results);
+}
+
+// ===== MEMORABLE GENERATOR =====
+function generateMemorablePassword(length, opts) {
+  // Pick 2-3 words, capitalize some, insert numbers and symbols
+  const w1 = WORD_LIST[Math.floor(Math.random() * WORD_LIST.length)];
+  const w2 = WORD_LIST[Math.floor(Math.random() * WORD_LIST.length)];
+  const w3 = WORD_LIST[Math.floor(Math.random() * WORD_LIST.length)];
+
+  const symbols = '!@#$%&*-+?';
+  const capitalize = (w) => w.charAt(0).toUpperCase() + w.slice(1);
+
+  let parts = [];
+  if (opts.upper) {
+    parts.push(capitalize(w1));
+    parts.push(capitalize(w2));
+  } else if (opts.lower) {
+    parts.push(w1);
+    parts.push(w2);
+  } else {
+    parts.push(w1.toUpperCase());
+    parts.push(w2.toUpperCase());
+  }
+
+  if (opts.symbols) {
+    parts.splice(1, 0, symbols[Math.floor(Math.random() * symbols.length)]);
+  }
+  if (opts.numbers) {
+    parts.push(String(Math.floor(Math.random() * 90) + 10));
+  }
+  if (opts.symbols) {
+    parts.push(symbols[Math.floor(Math.random() * symbols.length)]);
+  }
+
+  let pw = parts.join('');
+
+  // Adjust length
+  if (pw.length < length) {
+    const extra = capitalize(w3);
+    pw = pw.slice(0, -1) + extra + pw.slice(-1);
+  }
+  if (pw.length > length) {
+    pw = pw.slice(0, length);
+  }
+  // Ensure minimum length
+  while (pw.length < length) {
+    pw += 'abcdefghijklmnopqrstuvwxyz0123456789'[Math.floor(Math.random() * 36)];
+  }
+
+  return pw;
+}
+
+function generateMemorable() {
+  const opts = getActiveOpts('memorableOptions');
+  if (!opts.upper && !opts.lower && !opts.numbers && !opts.symbols) {
+    showError('memorableError', 'Select at least one character type.');
+    return;
+  }
+  const length = parseInt(document.getElementById('memorableLength').value);
+  const results = [];
+  for (let i = 0; i < 3; i++) {
+    let pw, analysis, attempts = 0;
+    do {
+      pw = generateMemorablePassword(length, opts);
+      analysis = analyzePassword(pw);
+      attempts++;
+    } while (analysis.score < 6 && attempts < 30);
+    results.push({ pw, analysis });
+  }
+  renderResults('memorableResults', results);
+}
+
+// ===== PERSONALIZED GENERATOR =====
+function generatePersonalPassword(length, opts, word, num, theme) {
+  const symbols = '!@#$%&*-+?';
+  const allWords = [word, theme].filter(Boolean);
+
+  // Use fragments of personal words, not full words
+  let fragments = [];
+  for (const w of allWords) {
+    if (w.length > 0) {
+      // Take a fragment (2-4 chars) and transform it
+      const frag = w.slice(0, Math.min(4, w.length));
+      // Apply transformation: capitalize, reverse, or leet
+      const transforms = [
+        () => frag.charAt(0).toUpperCase() + frag.slice(1),
+        () => frag.split('').reverse().join(''),
+        () => frag.replace(/a/gi, '@').replace(/e/gi, '3').replace(/i/gi, '1').replace(/o/gi, '0'),
+      ];
+      fragments.push(transforms[Math.floor(Math.random() * transforms.length)]());
+    }
+  }
+
+  // Random word from list
+  const rw = WORD_LIST[Math.floor(Math.random() * WORD_LIST.length)];
+  const cap = rw.charAt(0).toUpperCase() + rw.slice(1);
+
+  let parts = [];
+  parts.push(cap);
+  if (opts.symbols) parts.push(symbols[Math.floor(Math.random() * symbols.length)]);
+  if (fragments.length > 0) parts.push(fragments[0]);
+  if (opts.numbers) {
+    const n = num || String(Math.floor(Math.random() * 90) + 10);
+    parts.push(n.slice(0, 2));
+  }
+  if (fragments.length > 1) {
+    if (opts.symbols) parts.push(symbols[Math.floor(Math.random() * symbols.length)]);
+    parts.push(fragments[1]);
+  }
+  // Another random word
+  const rw2 = WORD_LIST[Math.floor(Math.random() * WORD_LIST.length)];
+  parts.push(rw2.charAt(0).toUpperCase() + rw2.slice(1));
+  if (opts.symbols) parts.push(symbols[Math.floor(Math.random() * symbols.length)]);
+  if (opts.numbers) parts.push(String(Math.floor(Math.random() * 9) + 1));
+
+  let pw = parts.join('');
+  if (pw.length > length) pw = pw.slice(0, length);
+  while (pw.length < length) {
+    pw += 'abcdefghijklmnopqrstuvwxyz0123456789!@#$%'[Math.floor(Math.random() * 41)];
+  }
+
+  return pw;
+}
+
+function generatePersonal() {
+  const opts = getActiveOpts('persOptions');
+  if (!opts.upper && !opts.lower && !opts.numbers && !opts.symbols) {
+    showError('persError', 'Select at least one character type.');
+    return;
+  }
+  const length = parseInt(document.getElementById('persLength').value);
+  const word = document.getElementById('persWord').value.trim();
+  const num = document.getElementById('persNumber').value.trim();
+  const theme = document.getElementById('persTheme').value.trim();
+
+  const results = [];
+  for (let i = 0; i < 5; i++) {
+    let pw, analysis, attempts = 0;
+    do {
+      pw = generatePersonalPassword(length, opts, word, num, theme);
+      analysis = analyzePassword(pw);
+      attempts++;
+    } while (analysis.score < 6 && attempts < 30);
+    results.push({ pw, analysis });
+  }
+  renderResults('personalResults', results);
+}
+
+// ===== PASSPHRASE GENERATOR =====
+function generatePassphraseText(wordCount, includeNumbers, includeSymbols) {
+  const symbols = ['!', '@', '#', '$', '%', '&', '*', '?'];
+  const separator = '-';
+  let words = [];
+
+  const used = new Set();
+  while (words.length < wordCount) {
+    const w = WORD_LIST[Math.floor(Math.random() * WORD_LIST.length)];
+    if (!used.has(w)) {
+      used.add(w);
+      words.push(w.charAt(0).toUpperCase() + w.slice(1));
+    }
+  }
+
+  let phrase = words.join(separator);
+  if (includeNumbers) {
+    phrase += separator + (Math.floor(Math.random() * 90) + 10);
+  }
+  if (includeSymbols) {
+    phrase += symbols[Math.floor(Math.random() * symbols.length)];
+  }
+  return phrase;
+}
+
+function generatePassphrase() {
+  const wordCount = parseInt(document.getElementById('phraseWords').value);
+  const opts = getActiveOpts('phraseOptions');
+
+  const results = [];
+  for (let i = 0; i < 3; i++) {
+    let pw, analysis, attempts = 0;
+    do {
+      pw = generatePassphraseText(wordCount, opts.numbers, opts.symbols);
+      analysis = analyzePassword(pw);
+      attempts++;
+    } while (analysis.score < 6 && attempts < 20);
+    results.push({ pw, analysis });
+  }
+  renderResults('passphraseResults', results, true);
+}
+
+// ===== RENDER RESULTS =====
+function renderResults(containerId, results, showLength = false) {
+  const container = document.getElementById(containerId);
+  container.innerHTML = results.map((r, i) => {
+    const badgeClass = r.analysis.score >= 9 ? 'very-strong' : r.analysis.score >= 7 ? 'strong' : 'medium';
+    return `
+      <div class="card gen-result">
+        <div class="gen-password" id="genPw${containerId}${i}">${escapeHtml(r.pw)}</div>
+        <div>
+          <span class="gen-strength-badge ${badgeClass}">${r.analysis.strengthLabel}</span>
+          ${showLength ? `<span style="font-size:0.8rem;color:var(--text-muted);margin-left:8px">${r.pw.length} chars</span>` : ''}
+        </div>
+        <div class="gen-actions">
+          <button class="btn btn-secondary btn-sm" onclick="copyPassword('${escapeAttr(r.pw)}')" aria-label="Copy password">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+            Copy
+          </button>
+          <button class="btn btn-secondary btn-sm" onclick="usePassword('${escapeAttr(r.pw)}')" aria-label="Use this password">Use</button>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  // Scroll to results
+  container.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+function escapeAttr(str) {
+  return str.replace(/'/g, "\\'").replace(/"/g, '&quot;').replace(/\\/g, '\\\\');
+}
+
+// ===== COPY =====
+function copyPassword(pw) {
+  navigator.clipboard.writeText(pw).then(() => {
+    showToast('Password copied');
+  }).catch(() => {
+    // Fallback
+    const ta = document.createElement('textarea');
+    ta.value = pw;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    showToast('Password copied');
+  });
+}
+
+function usePassword(pw) {
+  navigate('checker');
+  const input = document.getElementById('checkerInput');
+  input.value = pw;
+  input.type = 'password';
+  input.dispatchEvent(new Event('input'));
+}
+
+// ===== TOAST =====
+function showToast(msg) {
+  const toast = document.getElementById('toast');
+  document.getElementById('toastText').textContent = msg;
+  toast.classList.add('visible');
+  setTimeout(() => toast.classList.remove('visible'), 2200);
+}
+
+// ===== INIT =====
+// Close mobile menu on outside click
+document.addEventListener('click', function(e) {
+  const nav = document.getElementById('mobileNav');
+  const btn = document.querySelector('.mobile-menu-btn');
+  if (nav.classList.contains('open') && !nav.contains(e.target) && !btn.contains(e.target)) {
+    nav.classList.remove('open');
+  }
+});
+
+// Keyboard navigation for feature cards
+document.querySelectorAll('.feature-card').forEach(card => {
+  card.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      card.click();
+    }
+  });
+});
+</script>
+</body>
+</html>
